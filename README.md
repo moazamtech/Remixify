@@ -5,12 +5,12 @@
   
   ### Transform Your Music with Professional Studio Effects
   
-  [![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38bdf8?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
   [![Web Audio API](https://img.shields.io/badge/Web_Audio-API-orange?style=for-the-badge)](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API)
   
-  [Live Demo](https://remixify.vercel.app) • [Report Bug](https://github.com/moazamtech/Remixify/issues) • [Request Feature](https://github.com/moazamtech/Remixify/issues)
+   • [Report Bug](https://github.com/moazamtech/Remixify/issues) • [Request Feature](https://github.com/moazamtech/Remixify/issues)
   
 </div>
 
@@ -161,7 +161,7 @@ source.playbackRate.value = tempo * Math.pow(2, pitch / 12);
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [Shadcn UI](https://ui.shadcn.com/)
