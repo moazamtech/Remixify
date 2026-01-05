@@ -59,11 +59,14 @@ export function AudioConverter() {
 
   // Audio state
   const [tracks, setTracks] = React.useState<Track[]>([]);
-  const [currentTrackId, setCurrentTrackId] = React.useState<string | null>(null);
+  const [currentTrackId, setCurrentTrackId] = React.useState<string | null>(
+    null,
+  );
 
-  const currentTrack = React.useMemo(() =>
-    tracks.find(t => t.id === currentTrackId) || null
-    , [tracks, currentTrackId]);
+  const currentTrack = React.useMemo(
+    () => tracks.find((t) => t.id === currentTrackId) || null,
+    [tracks, currentTrackId],
+  );
 
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
@@ -72,7 +75,8 @@ export function AudioConverter() {
 
   // Effect state
   const [preset, setPreset] = React.useState<PresetType>("slowed");
-  const [settings, setSettings] = React.useState<AudioEffectSettings>(PRESET_SLOWED_REVERB);
+  const [settings, setSettings] =
+    React.useState<AudioEffectSettings>(PRESET_SLOWED_REVERB);
   const [pitchLock, setPitchLock] = React.useState(true);
 
   // Modal/Processing state
@@ -101,7 +105,9 @@ export function AudioConverter() {
   }, []);
 
   // Handle file upload
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const uploadedFiles = event.target.files;
     if (!uploadedFiles || uploadedFiles.length === 0) return;
 
@@ -129,11 +135,11 @@ export function AudioConverter() {
           id: Math.random().toString(36).substr(2, 9),
           file,
           buffer,
-          name: file.name
+          name: file.name,
         });
       }
 
-      setTracks(prev => [...prev, ...newTracks]);
+      setTracks((prev) => [...prev, ...newTracks]);
       if (newTracks.length > 0) {
         // Select the first of the newly uploaded tracks
         const firstTrack = newTracks[0];
@@ -141,7 +147,7 @@ export function AudioConverter() {
         setDuration(firstTrack.buffer.duration);
         setCurrentTime(0);
         pauseTimeRef.current = 0;
-        console.log('✅ Track uploaded and selected:', firstTrack.name);
+        console.log("✅ Track uploaded and selected:", firstTrack.name);
       }
       setView("studio");
       setProcessingProgress(100);
@@ -185,11 +191,11 @@ export function AudioConverter() {
 
   // Playback controls
   const stopPlayback = React.useCallback(() => {
-    console.log('⏹️ stopPlayback called');
+    console.log("⏹️ stopPlayback called");
     if (sourceRef.current) {
       try {
         sourceRef.current.stop();
-      } catch { }
+      } catch {}
       sourceRef.current.disconnect();
       sourceRef.current = null;
     }
@@ -200,9 +206,12 @@ export function AudioConverter() {
   }, []);
 
   const playAudio = React.useCallback(() => {
-    console.log('🎵 playAudio called', { hasTrack: !!currentTrack, trackName: currentTrack?.name });
+    console.log("🎵 playAudio called", {
+      hasTrack: !!currentTrack,
+      trackName: currentTrack?.name,
+    });
     if (!currentTrack) {
-      console.warn('❌ No current track to play');
+      console.warn("❌ No current track to play");
       return;
     }
 
@@ -255,12 +264,13 @@ export function AudioConverter() {
     startTimeRef.current = context.currentTime - offset / combinedRate;
 
     source.start(0, offset);
-    console.log('✅ Audio source started', { offset, combinedRate });
+    console.log("✅ Audio source started", { offset, combinedRate });
     setIsPlaying(true);
 
     const updateTime = () => {
       if (!sourceRef.current) return;
-      const elapsed = (context.currentTime - startTimeRef.current) * combinedRate;
+      const elapsed =
+        (context.currentTime - startTimeRef.current) * combinedRate;
       setCurrentTime(Math.min(elapsed, currentTrack.buffer.duration));
 
       if (elapsed < currentTrack.buffer.duration) {
@@ -281,10 +291,17 @@ export function AudioConverter() {
         setCurrentTime(0);
       }
     };
-  }, [currentTrack, settings, volume, pitchLock, getAudioContext, stopPlayback]);
+  }, [
+    currentTrack,
+    settings,
+    volume,
+    pitchLock,
+    getAudioContext,
+    stopPlayback,
+  ]);
 
   const togglePlayback = React.useCallback(() => {
-    console.log('🔄 togglePlayback called', { isPlaying, currentTime });
+    console.log("🔄 togglePlayback called", { isPlaying, currentTime });
     if (isPlaying) {
       pauseTimeRef.current = currentTime;
       stopPlayback();
@@ -307,7 +324,7 @@ export function AudioConverter() {
   };
 
   const handleTrackSelect = (id: string) => {
-    const track = tracks.find(t => t.id === id);
+    const track = tracks.find((t) => t.id === id);
     if (!track) return;
 
     stopPlayback();
@@ -331,18 +348,25 @@ export function AudioConverter() {
       await simulateProgress(0, 20, "analyzing");
       await simulateProgress(20, 60, "processing");
 
-      const processed = await renderProcessedAudio(currentTrack.buffer, settings);
+      const processed = await renderProcessedAudio(
+        currentTrack.buffer,
+        settings,
+      );
       await simulateProgress(60, 90, "applying");
 
       const wavBlob = audioBufferToWav(processed);
-      // For MP3, we would ideally encode here. For now, we provide the HQ WAV 
+      // For MP3, we would ideally encode here. For now, we provide the HQ WAV
       // but honor the user's extension choice if they prefer it for certain players.
-      const blob = format === "wav" ? wavBlob : new Blob([wavBlob], { type: "audio/mpeg" });
+      const blob =
+        format === "wav"
+          ? wavBlob
+          : new Blob([wavBlob], { type: "audio/mpeg" });
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const originalName = currentTrack.name.replace(/\.[^/.]+$/, "") || "audio";
+      const originalName =
+        currentTrack.name.replace(/\.[^/.]+$/, "") || "audio";
       const suffix = preset === "slowed" ? "_slowed_reverb" : "_nightcore";
       a.download = `${originalName}${suffix}.${format}`;
 
@@ -369,6 +393,13 @@ export function AudioConverter() {
     pauseTimeRef.current = 0;
   };
 
+  // Update volume in real-time without restarting playback
+  React.useEffect(() => {
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = volume;
+    }
+  }, [volume]);
+
   // Restart playback when settings change
   const isFirstRender = React.useRef(true);
   React.useEffect(() => {
@@ -378,7 +409,7 @@ export function AudioConverter() {
       return;
     }
 
-    console.log('⚙️ Settings effect triggered', { isPlaying, settings });
+    console.log("⚙️ Settings effect triggered", { isPlaying, settings });
     if (isPlaying) {
       const savedTime = currentTime;
       stopPlayback();
@@ -387,13 +418,25 @@ export function AudioConverter() {
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings.tempo, settings.pitch, settings.reverbMix, settings.reverbDecay, settings.bassGain, pitchLock]);
+  }, [
+    settings.tempo,
+    settings.pitch,
+    settings.reverbMix,
+    settings.reverbDecay,
+    settings.bassGain,
+    pitchLock,
+  ]);
 
   // Spacebar control for play/pause
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       // Only trigger if not typing in an input field
-      if (e.code === "Space" && e.target instanceof HTMLElement && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+      if (
+        e.code === "Space" &&
+        e.target instanceof HTMLElement &&
+        e.target.tagName !== "INPUT" &&
+        e.target.tagName !== "TEXTAREA"
+      ) {
         e.preventDefault();
         togglePlayback();
       }
@@ -413,21 +456,44 @@ export function AudioConverter() {
     setScrollProgress(progress);
   };
 
-  // Waveform data generation (simulated)
+  // Waveform data generation from actual audio buffer
   const waveformData = React.useMemo(() => {
-    return Array.from({ length: 120 }, () => 0.1 + Math.random() * 0.8);
+    if (!currentTrack?.buffer) {
+      return Array.from({ length: 120 }, () => 0.1 + Math.random() * 0.8);
+    }
+
+    const buffer = currentTrack.buffer;
+    const channelData = buffer.getChannelData(0);
+    const samples = 150; // Number of bars in waveform
+    const blockSize = Math.floor(channelData.length / samples);
+    const waveform: number[] = [];
+
+    for (let i = 0; i < samples; i++) {
+      let sum = 0;
+      const start = i * blockSize;
+      for (let j = 0; j < blockSize; j++) {
+        sum += Math.abs(channelData[start + j] || 0);
+      }
+      const average = sum / blockSize;
+      // Normalize to 0.1-1.0 range for visual appeal
+      waveform.push(Math.min(1, Math.max(0.1, average * 3)));
+    }
+
+    return waveform;
   }, [currentTrack]);
 
   return (
     <div className="flex h-screen bg-black text-white overflow-hidden font-sans">
       <Sidebar
         onUploadClick={() => fileInputRef.current?.click()}
-        tracks={tracks.map(t => ({ id: t.id, name: t.name }))}
+        tracks={tracks.map((t) => ({ id: t.id, name: t.name }))}
         currentTrackId={currentTrackId || undefined}
         onTrackSelect={handleTrackSelect}
         className={cn(
           "fixed inset-y-0 left-0 z-50 transform md:relative md:translate-x-0 transition-transform duration-300 ease-in-out",
-          showMobileSidebar ? "translate-x-0 flex" : "-translate-x-full md:flex"
+          showMobileSidebar
+            ? "translate-x-0 flex"
+            : "-translate-x-full md:flex",
         )}
       />
 
@@ -449,7 +515,7 @@ export function AudioConverter() {
           style={{
             backgroundColor: `rgba(9, 9, 11, ${scrollProgress * 0.8})`,
             backdropFilter: `blur(${scrollProgress * 12}px)`,
-            borderBottom: `1px solid rgba(255, 255, 255, ${scrollProgress * 0.05})`
+            borderBottom: `1px solid rgba(255, 255, 255, ${scrollProgress * 0.05})`,
           }}
         >
           <div className="flex items-center gap-2">
@@ -461,23 +527,44 @@ export function AudioConverter() {
             >
               <Music2 className="w-5 h-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="bg-black/40 rounded-full hover:bg-black/60 text-white hidden md:flex">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-black/40 rounded-full hover:bg-black/60 text-white hidden md:flex"
+            >
               <ChevronLeft className="w-6 h-6" />
             </Button>
-            <Button variant="ghost" size="icon" className="bg-black/40 rounded-full hover:bg-black/60 text-white hidden md:flex">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-black/40 rounded-full hover:bg-black/60 text-white hidden md:flex"
+            >
               <ChevronRight className="w-6 h-6" />
             </Button>
             {view === "studio" && (
               <div className="ml-0 md:ml-4 flex items-center bg-zinc-900/80 rounded-full px-4 py-1.5 border border-white/5 shadow-xl backdrop-blur-md">
                 <Search className="w-4 h-4 text-zinc-400 mr-2" />
-                <span className="text-xs md:text-sm text-zinc-400 truncate max-w-[120px] md:max-w-none">Search tracks...</span>
+                <span className="text-xs md:text-sm text-zinc-400 truncate max-w-[120px] md:max-w-none">
+                  Search tracks...
+                </span>
               </div>
             )}
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
-            <Button variant="ghost" className="text-white font-bold hover:scale-105 transition-transform text-xs md:text-sm">Premium</Button>
-            <Button variant="ghost" size="icon" className="bg-black/40 rounded-full text-zinc-400"><Bell className="w-5 h-5" /></Button>
+            <Button
+              variant="ghost"
+              className="text-white font-bold hover:scale-105 transition-transform text-xs md:text-sm"
+            >
+              Premium
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="bg-black/40 rounded-full text-zinc-400"
+            >
+              <Bell className="w-5 h-5" />
+            </Button>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 border-2 border-zinc-800">
               <Link href="https://github.com/moazamtech">
                 <Image
@@ -502,7 +589,9 @@ export function AudioConverter() {
               <div className="flex flex-col gap-2 mb-12">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 w-fit mb-4">
                   <Sparkles className="w-4 h-4" />
-                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">New Remaster Engine v2.0</span>
+                  <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">
+                    New Remaster Engine v2.0
+                  </span>
                 </div>
                 <h1 className="text-4xl md:text-7xl font-extrabold tracking-tight mb-2">
                   Create Magic <br className="hidden md:block" />
@@ -511,8 +600,9 @@ export function AudioConverter() {
                   </span>
                 </h1>
                 <p className="text-zinc-400 text-base md:text-xl max-w-2xl leading-relaxed">
-                  The ultimate audio studio for Slowed + Reverb, Nightcore, and Bass Boosted remixes.
-                  Upload your favorite tracks and transform them with premium studio tools.
+                  The ultimate audio studio for Slowed + Reverb, Nightcore, and
+                  Bass Boosted remixes. Upload your favorite tracks and
+                  transform them with premium studio tools.
                 </p>
               </div>
 
@@ -546,9 +636,20 @@ export function AudioConverter() {
                 <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-purple-600 flex items-center justify-center shadow-2xl shadow-purple-600/20 transform group-hover:scale-110 transition-transform mb-6">
                   <Upload className="w-6 h-6 md:w-8 md:h-8 text-white" />
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold mb-2">Ready to start?</h2>
-                <p className="text-zinc-500 text-sm md:text-base px-4 text-center">Drop audio files here or click to browse</p>
-                <input ref={fileInputRef} type="file" accept="audio/*" onChange={handleFileChange} multiple className="hidden" />
+                <h2 className="text-xl md:text-2xl font-bold mb-2">
+                  Ready to start?
+                </h2>
+                <p className="text-zinc-500 text-sm md:text-base px-4 text-center">
+                  Drop audio files here or click to browse
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/*"
+                  onChange={handleFileChange}
+                  multiple
+                  className="hidden"
+                />
               </div>
             </div>
           ) : (
@@ -560,21 +661,32 @@ export function AudioConverter() {
                   <Music2 className="w-16 h-16 md:w-24 md:h-24 text-white drop-shadow-2xl" />
                 </div>
                 <div className="flex flex-col gap-2 text-center md:text-left min-w-0 flex-1">
-                  <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-zinc-400">Current Session</span>
+                  <span className="text-xs md:text-sm font-bold uppercase tracking-widest text-zinc-400">
+                    Current Session
+                  </span>
                   <h1 className="text-3xl md:text-6xl font-black tracking-tighter truncate w-full">
                     {currentTrack?.name || "Untitled Track"}
                   </h1>
                   <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
                     <div className="flex items-center gap-2">
                       <div className="w-5 h-5 md:w-6 md:h-6 rounded-full bg-purple-500 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100&h=100" alt="Avatar" />
+                        <img
+                          src="https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=100&h=100"
+                          alt="Avatar"
+                        />
                       </div>
-                      <span className="text-xs md:text-sm font-bold">Remixify Creator</span>
+                      <span className="text-xs md:text-sm font-bold">
+                        Remixify Creator
+                      </span>
                     </div>
                     <span className="text-zinc-500">•</span>
-                    <span className="text-xs md:text-sm text-zinc-400">{preset === "slowed" ? "Slowed + Reverb" : "Nightcore"}</span>
+                    <span className="text-xs md:text-sm text-zinc-400">
+                      {preset === "slowed" ? "Slowed + Reverb" : "Nightcore"}
+                    </span>
                     <span className="text-zinc-500 hidden md:inline">•</span>
-                    <span className="text-xs md:text-sm text-zinc-400 hidden md:inline">{formatTime(duration)} duration</span>
+                    <span className="text-xs md:text-sm text-zinc-400 hidden md:inline">
+                      {formatTime(duration)} duration
+                    </span>
                   </div>
                 </div>
               </div>
@@ -586,7 +698,11 @@ export function AudioConverter() {
                     className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-purple-500 hover:bg-purple-600 hover:scale-105 transition-all shadow-lg shadow-purple-500/20"
                     onClick={togglePlayback}
                   >
-                    {isPlaying ? <Plus className="w-6 h-6 rotate-45" /> : <Play className="w-5 h-5 md:w-6 md:h-6 ml-1 fill-white" />}
+                    {isPlaying ? (
+                      <Plus className="w-6 h-6 rotate-45" />
+                    ) : (
+                      <Play className="w-5 h-5 md:w-6 md:h-6 ml-1 fill-white" />
+                    )}
                   </Button>
                   <Button
                     variant="ghost"
@@ -608,14 +724,22 @@ export function AudioConverter() {
                 <div className="flex items-center gap-2 md:gap-3 bg-zinc-900/40 p-1 rounded-xl border border-white/5 w-full md:w-auto">
                   <Button
                     variant={preset === "slowed" ? "secondary" : "ghost"}
-                    className={cn("flex-1 md:flex-none rounded-lg font-bold px-4 md:px-6 text-xs md:text-sm", preset === "slowed" && "bg-white text-black hover:bg-white")}
+                    className={cn(
+                      "flex-1 md:flex-none rounded-lg font-bold px-4 md:px-6 text-xs md:text-sm",
+                      preset === "slowed" &&
+                        "bg-white text-black hover:bg-white",
+                    )}
                     onClick={() => handlePresetChange("slowed")}
                   >
                     Slowed
                   </Button>
                   <Button
                     variant={preset === "nightcore" ? "secondary" : "ghost"}
-                    className={cn("flex-1 md:flex-none rounded-lg font-bold px-4 md:px-6 text-xs md:text-sm", preset === "nightcore" && "bg-white text-black hover:bg-white")}
+                    className={cn(
+                      "flex-1 md:flex-none rounded-lg font-bold px-4 md:px-6 text-xs md:text-sm",
+                      preset === "nightcore" &&
+                        "bg-white text-black hover:bg-white",
+                    )}
                     onClick={() => handlePresetChange("nightcore")}
                   >
                     Nightcore
@@ -635,7 +759,9 @@ export function AudioConverter() {
                         Studio Waveform
                       </h3>
                       <div className="flex items-center gap-4 text-[10px] md:text-sm font-mono text-zinc-500">
-                        <span className="text-white">{formatTime(currentTime)}</span>
+                        <span className="text-white">
+                          {formatTime(currentTime)}
+                        </span>
                         <span>/</span>
                         <span>{formatTime(duration)}</span>
                       </div>
@@ -647,11 +773,13 @@ export function AudioConverter() {
                         currentTime={currentTime}
                         duration={duration}
                         onSeek={handleSeek}
-                        height={100}
-                        barWidth={4}
-                        barGap={1}
-                        barColor="#a855f7"
-                        className="text-purple-500"
+                        height={120}
+                        barWidth={3}
+                        barGap={2}
+                        barRadius={2}
+                        activeColor="#a855f7"
+                        inactiveColor="#3f3f46"
+                        showHandle={true}
                       />
 
                       {/* Integrated Quick Bass Slider */}
@@ -659,9 +787,13 @@ export function AudioConverter() {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2 text-purple-400">
                             <Zap className="w-4 h-4" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Bass Booster</span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest">
+                              Bass Booster
+                            </span>
                           </div>
-                          <span className="text-xs font-mono font-bold text-white bg-purple-500/20 px-2 py-0.5 rounded">{settings.bassGain.toFixed(1)}dB</span>
+                          <span className="text-xs font-mono font-bold text-white bg-purple-500/20 px-2 py-0.5 rounded">
+                            {settings.bassGain.toFixed(1)}dB
+                          </span>
                         </div>
                         <Slider
                           value={[settings.bassGain]}
@@ -678,7 +810,9 @@ export function AudioConverter() {
                   {/* Desktop Controls (Extra space) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-zinc-900/30 p-6 rounded-3xl border border-white/5">
-                      <h4 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6">Advanced Reverb</h4>
+                      <h4 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6">
+                        Advanced Reverb
+                      </h4>
                       <div className="space-y-8">
                         <ControlSlider
                           label="Decay Time"
@@ -701,14 +835,23 @@ export function AudioConverter() {
                       </div>
                     </div>
                     <div className="bg-zinc-900/30 p-6 rounded-3xl border border-white/5">
-                      <h4 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6">Tone & Pitch</h4>
+                      <h4 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6">
+                        Tone & Pitch
+                      </h4>
                       <div className="space-y-6">
                         <div className="flex items-center justify-between p-3 rounded-2xl bg-black/20 border border-white/5">
                           <div className="flex flex-col">
-                            <span className="text-xs md:text-sm font-bold">Lock Pitch</span>
-                            <span className="text-[10px] text-zinc-500">Maintain key while slowing</span>
+                            <span className="text-xs md:text-sm font-bold">
+                              Lock Pitch
+                            </span>
+                            <span className="text-[10px] text-zinc-500">
+                              Maintain key while slowing
+                            </span>
                           </div>
-                          <Switch checked={pitchLock} onCheckedChange={setPitchLock} />
+                          <Switch
+                            checked={pitchLock}
+                            onCheckedChange={setPitchLock}
+                          />
                         </div>
                         <ControlSlider
                           label="Pitch Shift"
@@ -729,10 +872,14 @@ export function AudioConverter() {
                 <div className="space-y-6">
                   <div className="bg-zinc-900/30 p-6 rounded-3xl border border-white/5 backdrop-blur-sm relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-3xl rounded-full -mr-16 -mt-16 pointer-events-none" />
-                    <h4 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6 relative z-10">Master Speed</h4>
+                    <h4 className="text-xs md:text-sm font-bold text-zinc-500 uppercase tracking-widest mb-6 relative z-10">
+                      Master Speed
+                    </h4>
                     <div className="flex flex-col gap-4 relative z-10">
                       <div className="flex items-center justify-center p-8 rounded-full border-4 border-purple-500/20 bg-black/40 relative">
-                        <span className="text-4xl md:text-5xl font-black">{settings.tempo.toFixed(2)}x</span>
+                        <span className="text-4xl md:text-5xl font-black">
+                          {settings.tempo.toFixed(2)}x
+                        </span>
                       </div>
                       <Slider
                         value={[settings.tempo]}
@@ -743,7 +890,8 @@ export function AudioConverter() {
                         className="mt-6"
                       />
                       <p className="text-center text-[10px] text-zinc-500 mt-2">
-                        Adjust playback speed while preserving or shifting pitch.
+                        Adjust playback speed while preserving or shifting
+                        pitch.
                       </p>
                     </div>
                   </div>
@@ -757,9 +905,12 @@ export function AudioConverter() {
                   </button>
 
                   <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 p-6 rounded-3xl border border-white/10">
-                    <h4 className="text-xs font-bold text-white mb-2 uppercase tracking-widest">Studio Tip</h4>
+                    <h4 className="text-xs font-bold text-white mb-2 uppercase tracking-widest">
+                      Studio Tip
+                    </h4>
                     <p className="text-[10px] text-zinc-400 leading-relaxed uppercase tracking-wider">
-                      Batch upload multiple files and switch between them in the sidebar to keep your flow.
+                      Batch upload multiple files and switch between them in the
+                      sidebar to keep your flow.
                     </p>
                   </div>
                 </div>
@@ -794,51 +945,95 @@ export function AudioConverter() {
           effectType={preset === "slowed" ? "Slowed+Reverb" : "Nightcore"}
         />
       </main>
-    </div >
+    </div>
   );
 }
 
-function FeatureCard({ title, desc, icon: Icon, color, active = false }: { title: string, desc: string, icon: any, color: "purple" | "pink" | "blue", active?: boolean }) {
+function FeatureCard({
+  title,
+  desc,
+  icon: Icon,
+  color,
+  active = false,
+}: {
+  title: string;
+  desc: string;
+  icon: any;
+  color: "purple" | "pink" | "blue";
+  active?: boolean;
+}) {
   const colors = {
     purple: "bg-purple-500",
     pink: "bg-pink-500",
-    blue: "bg-blue-500"
+    blue: "bg-blue-500",
   };
 
   return (
-    <div className={cn(
-      "p-6 rounded-3xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all group",
-      active && "border-white/10 bg-zinc-900/60"
-    )}>
-      <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6 shadow-xl", colors[color])}>
+    <div
+      className={cn(
+        "p-6 rounded-3xl border border-white/5 bg-zinc-900/40 hover:bg-zinc-900/60 transition-all group",
+        active && "border-white/10 bg-zinc-900/60",
+      )}
+    >
+      <div
+        className={cn(
+          "w-12 h-12 rounded-2xl flex items-center justify-center mb-6 shadow-xl",
+          colors[color],
+        )}
+      >
         <Icon className="w-6 h-6 text-white" />
       </div>
-      <h3 className="text-xl font-bold mb-2 group-hover:text-purple-400 transition-colors">{title}</h3>
+      <h3 className="text-xl font-bold mb-2 group-hover:text-purple-400 transition-colors">
+        {title}
+      </h3>
       <p className="text-zinc-500 text-sm leading-relaxed">{desc}</p>
     </div>
   );
 }
 
-function ControlSlider({ label, value, min, max, step, unit, percentage, disabled, onChange }: {
-  label: string,
-  value: number,
-  min: number,
-  max: number,
-  step: number,
-  unit?: string,
-  percentage?: boolean,
-  disabled?: boolean,
-  onChange: (val: number) => void
+function ControlSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  unit,
+  percentage,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit?: string;
+  percentage?: boolean;
+  disabled?: boolean;
+  onChange: (val: number) => void;
 }) {
   return (
-    <div className={cn("space-y-4", disabled && "opacity-40 grayscale pointer-events-none")}>
+    <div
+      className={cn(
+        "space-y-4",
+        disabled && "opacity-40 grayscale pointer-events-none",
+      )}
+    >
       <div className="flex items-center justify-between">
         <Label className="text-sm font-bold text-zinc-400">{label}</Label>
         <span className="text-sm font-mono text-white">
-          {percentage ? Math.round(value * 100) + "%" : value.toFixed(1) + (unit || "")}
+          {percentage
+            ? Math.round(value * 100) + "%"
+            : value.toFixed(1) + (unit || "")}
         </span>
       </div>
-      <Slider value={[value]} min={min} max={max} step={step} onValueChange={([v]) => onChange(v)} />
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={step}
+        onValueChange={([v]) => onChange(v)}
+      />
     </div>
   );
 }
